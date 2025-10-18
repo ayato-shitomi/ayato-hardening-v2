@@ -210,4 +210,13 @@ sudo a2enmod rewrite &> /dev/null
 sudo systemctl restart apache2
 # install a vulnerable plugin
 echo "[*] Installing a vulnerable plugin: "
+
+sudo -u www-data -H bash -lc '
+cd /var/www/html/wp-content/plugins
+mkdir easy-log-viewer
+cd easy-log-viewer
+
+echo "[*] WordPress installation completed"
+
+
 echo "[*] WordPress is running on http://$IP"
