@@ -1,0 +1,6 @@
+{
+  "senario_path": "scenarios/easy.json",
+  "victim_ips": [
+    "192.168.25.138"
+  ]
+}

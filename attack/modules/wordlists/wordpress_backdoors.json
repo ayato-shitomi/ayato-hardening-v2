@@ -1,0 +1,10 @@
+{
+    "usernames": [
+        "evilfrommysql",
+        "evilfromxmlrpc",
+        "evilfromplugin"
+    ],
+    "passwords": [
+        "admin"
+    ]
+}

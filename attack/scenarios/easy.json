@@ -1,0 +1,11 @@
+{
+    "about": {
+        "name": "Easy Scenario",
+        "description": "非常にシンプルなシナリオで、基本的な攻撃モジュールによる攻撃を実行します。",
+        "version": "1.0.0",
+        "author": "Ayato"
+    },
+    "scenario": [
+
+    ]
+}
