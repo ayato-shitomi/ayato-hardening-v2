@@ -154,6 +154,55 @@ root@ubuntu-srv-hardening-dev:~# ls -la  /tmp/dbbackups/
 total 140
 drwxr-xr-x  2 root root   4096 Oct 30 00:18 .
 drwxrwxrwt 14 root root   4096 Oct 30 00:15 ..
--rwxr--r--  1 root root 132873 Oct 30 00:18 wp_20251030.sql
+-rwxr--r--  1 root root 132873 Oct 30 00:18 wp.sql
 ```
 
+# フルハードニング
+
+```bash
+# 脆弱なユーザーパスワード
+grep -Ff /etc/shells /etc/passwd | cut -d: -f1 | while read -r user; do
+  echo "$user:StrongPWD123"
+done | sudo chpasswd
+
+# 脆弱なsudo権限
+sudo cp /etc/sudoers /etc/sudoers.bak
+sudo sed -i 's/NOPASSWD://g' /etc/sudoers
+
+# 脆弱なWEBアプリケーション
+# WEBアプリケーションのデバッグモードが有効
+# WEBアプリケーションではLFIが可能
+sed -i "/@app\.route('\/api\/ping'/ s/^/#/" /home/webadmin/app/app.py
+sed -i "/@app\.route('\/api\/users'/ s/^/#/" /home/webadmin/app/app.py
+sed -i "/[[:space:]]*os\.environ\['WERKZEUG_DEBUG_PIN'\]/ s/^/#/" /home/webadmin/app/app.py
+sed -i "s/debug=True/debug=False/" /home/webadmin/app/app.py
+sed -i "s|filename = request\.args\.get('filename') or request\.form\.get('filename')|filename = applog|" /home/webadmin/app/app.py
+systemctl restart flaskapp
+
+# 脆弱なWordPress管理者パスワード
+# 脆弱なWordPressプラグイン: LiteSpeed Cache v6.4.1
+# 脆弱なWordPressプラグイン: Access Counter
+cd /var/www/html
+NEWPASS='StrongPWD123'
+for id in $(wp user list --field=ID --allow-root); do
+  wp user update "$id" --user_pass="$NEWPASS" --allow-root
+done
+wp plugin update litespeed-cache --allow-root
+wp config set WP_DEBUG false --raw --allow-root
+wp config set WP_DEBUG_LOG false --raw --allow-root
+wp config set WP_DEBUG_DISPLAY true --raw --allow-root
+rm -rf /var/www/html/wp-content/debug.log
+sed -i '/add_action("wp_ajax_ac_set_count", "ac_debug");/ s/^/\/\/ /; /add_action("wp_ajax_nopriv_ac_set_count", "ac_debug");/ s/^/\/\/ /' /var/www/html/wp-content/plugins/access-counter/access-counter.php
+
+# 脆弱なMySQLのパスワード設定
+sudo sed -i 's/^bind-address\s*=.*/bind-address = 127.0.0.1/' /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo systemctl restart mysql
+
+## 脆弱なApacheのWebDAV設定
+sudo sed -i 's/^[[:space:]]*Dav On/# &/' /etc/apache2/apache2.conf
+systemctl restart apache2
+
+## 脆弱なCrontabの出力権限設定
+sudo sed -i 's/chmod[[:space:]]\+777/chmod 400/g' /usr/local/bin/db_backup.sh
+/usr/local/bin/db_backup.sh
+```

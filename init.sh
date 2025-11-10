@@ -476,21 +476,20 @@ sudo systemctl restart apache2
 echo "[*] Creating database backup script"
 cat << 'EOF' > /usr/local/bin/db_backup.sh
 #!/bin/bash
-DATE=$(date +"%Y%m%d")
 DB_NAME="wp"
 BACKUP_DIR="/tmp/dbbackups/"
 
 mkdir -p "$BACKUP_DIR" 2> /dev/null
 rm -f "$BACKUP_DIR"/*
-sudo mysqldump -u"root" "$DB_NAME" > "$BACKUP_DIR/${DB_NAME}_${DATE}.sql"
-chmod 644 "$BACKUP_DIR/${DB_NAME}_${DATE}.sql"
+mysqldump -u"root" "$DB_NAME" > "$BACKUP_DIR/${DB_NAME}.sql"
+chmod 777 "$BACKUP_DIR/${DB_NAME}.sql"
 EOF
 chmod +x /usr/local/bin/db_backup.sh
 
 # setup cron job for database backup
 echo "[*] Setting up cron job for database backup"
 echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' > /etc/cron.d/db_backup
-echo '5 * * * * root /usr/local/bin/db_backup.sh' >> /etc/cron.d/db_backup
+echo '*/5 * * * * root /usr/local/bin/db_backup.sh' >> /etc/cron.d/db_backup
 echo '' >> /etc/cron.d/db_backup
 chmod 644 /etc/cron.d/db_backup
 chown root:root /etc/cron.d/db_backup

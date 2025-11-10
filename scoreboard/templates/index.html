@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>スコアボード</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h1 {
+                text-align: center;
+                color: #333;
+            }
+            #chartContainer {
+                position: relative;
+                height: 500px;
+                margin-top: 30px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Ayato Hardening v2 スコアボード</h1>
+        <div id="chartContainer">
+            <canvas id="scoreChart"></canvas>
+        </div>
+        <script>
+            // 縦軸にスコア、横軸に時間のグラフで、それぞれの線がチームを表す
+            // APIからデータを取得してグラフを描画する
+
+            // スコアを取得
+            async function fetchScores() {
+                const response = await fetch('/api/get_scores');
+                const data = await response.json();
+                return data;
+            }
+            // チーム情報を取得
+            async function fetchTeams() {
+                const response = await fetch('/api/get_teams');
+                const data = await response.json();
+                return data;
+            }
+
+            // チーム名から一貫した色を生成
+            function getColorForTeam(teamName) {
+                const colors = [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40',
+                    '#E7E9ED',
+                    '#C9CBCF'
+                ];
+
+                // チーム名の文字列をハッシュ化して色のインデックスを決定
+                let hash = 0;
+                for (let i = 0; i < teamName.length; i++) {
+                    hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const index = Math.abs(hash) % colors.length;
+                return colors[index];
+            }
+
+            // グラフを描画
+            async function drawChart() {
+                const scoresData = await fetchScores();
+                const teamsData = await fetchTeams();
+
+                const datasets = Object.keys(scoresData).map(ip => {
+                    // teamsDataはオブジェクト形式 {"team_name": "ip"} なので、チーム名を探す
+                    let teamName = ip;
+                    for (const [name, teamIp] of Object.entries(teamsData)) {
+                        if (teamIp === ip) {
+                            teamName = name;
+                            break;
+                        }
+                    }
+
+                    const actions = scoresData[ip].actions;
+
+                    let cumulativeScore = 0;
+                    const dataPoints = actions.map(action => {
+                        cumulativeScore += action.points;
+                        return { x: new Date(action.time), y: cumulativeScore };
+                    });
+
+                    // 初期値として (0, 0) を追加
+                    if (dataPoints.length > 0) {
+                        dataPoints.unshift({ x: new Date(dataPoints[0].x.getTime() - 60000), y: 0 });
+                    }
+
+                    return {
+                        label: teamName,
+                        data: dataPoints,
+                        fill: false,
+                        borderColor: getColorForTeam(teamName),
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    };
+                });
+
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'minute',
+                                    displayFormats: {
+                                        minute: 'HH:mm',
+                                        hour: 'HH:mm'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'タイムスタンプ'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'スコア'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+            }
+            drawChart();
+        </script>
+    </body>
+</html>

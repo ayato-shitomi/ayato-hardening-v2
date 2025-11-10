@@ -4,6 +4,7 @@ import time
 def create_requirements_txt(scenario):
     requirements = set()
     requirements.add('setuptools>=40.8.0')
+    requirements.add('futures>=3.0.5')
     for step in scenario['scenario']:
         attack_libs = step.get('attack', {}).get('libraries', [])
         success_libs = step.get('onsuccess', {}).get('libraries', [])
@@ -30,6 +31,13 @@ def check_env():
                 if package_name == 'beautifulsoup4':
                     try:
                         import bs4
+                    except ImportError:
+                        print(f'[-] Missing required library: {package_name}.')
+                        print('[-] Please run: "pip install -r requirements.txt".')
+                        return -1
+                elif package_name == 'futures':
+                    try:
+                        import concurrent.futures
                     except ImportError:
                         print(f'[-] Missing required library: {package_name}.')
                         print('[-] Please run: "pip install -r requirements.txt".')
@@ -61,8 +69,29 @@ def get_scenario(path):
     scenario = json.load(json_open)
     return scenario
 
-def push_scorebord(ip, points, reason):
-    print(f"[*] Pushing {points} points to scoreboard for {ip} - Reason: {reason}")
+def push_scoreboard(ip, points, reason):
+    for t in teams:
+        if teams[t] == ip:
+            team = t
+    print("\033[31m")
+    print(f"[*] Pushing {points} points to scoreboard for {team} / {ip} - Reason: {reason}")
+    print("\033[0m")
+    import requests
+    url = f"{scoreboard_url}/api/push_score"
+    data = {
+        "ip": ip,
+        "points": points,
+        "reason": reason
+    }
+    try:
+        res = requests.post(url, json=data)
+        if res.status_code != 200:
+            print(f"[-] Could not push score to scoreboard: {res.text}")
+            return -1
+        print(f"[+] Successfully pushed score to scoreboard: {res.text}")
+    except Exception as e:
+        print(f"[-] Error pushing score to scoreboard: {e}")
+        return -1
     return 0
 
 def run_attack(ip, step):
@@ -99,11 +128,11 @@ def run_attack(ip, step):
         if ret == -1:
             print(f"[-] Attack {step['name']} failed on {ip}.")
             if 'gain_points' in step:
-                push_scorebord(ip, step['gain_points'] , f"Defended against {step['name']}")
+                push_scoreboard(ip, step['gain_points'] , f"Defended against {step['name']}")
             return -1
         else:
             print(f"[+] Attack {step['name']} succeeded on {ip}.")
-            push_scorebord(ip, 0, f"Attacker succeeded in {step['name']}")
+            push_scoreboard(ip, 0, f"Attacker succeeded in {step['name']}")
     except Exception as e:
         print(f"[-] Error running attack {step['name']} on {ip}: {e}")
         return -1
@@ -115,11 +144,32 @@ def run_scenario(victim_ips, scenario):
         print("--------------------------------")
         print(f"[*] Preparing to execute attack: {step['name']} in {step.get('start', 0)} minutes")
         time.sleep(step.get('start', 0) * 60)
-        for ip in victim_ips:
-            run_attack(ip, step)
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(run_attack, ip, step) for ip in victim_ips]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
     return 0
 
+def check_scoreboard(config):
+    import requests
+    scoreboard_ip = config["scoreboard"]["ip"]
+    scoreboard_port = config["scoreboard"]["port"]
+    url = f"http://{scoreboard_ip}:{scoreboard_port}"
+    print(f"[*] Checking scoreboard: {url}")
+    try:
+        res = requests.get(url)
+        if res.status_code != 200:
+            print(f"[-] Could not connect scoreboard {url}")
+            return False
+        return url
+    except Exception as e:
+        print(f"[-] Scoreboard check error: {e}")
+        return False
+
 def main():
+    global teams
+    global scoreboard_url
     config = get_config('config.json')
     if config == -1:
         return -1
@@ -130,7 +180,11 @@ def main():
     create_requirements_txt(scenario)
     if check_env() == -1:
         return -1
+    scoreboard_url = check_scoreboard(config)
+    if scoreboard_url == False:
+        return -1
     victim_ips = config['victim_ips']
+    teams = config['teams']
     run_scenario(victim_ips, scenario)
 
 if __name__== '__main__':
