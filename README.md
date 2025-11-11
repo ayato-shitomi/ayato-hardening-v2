@@ -4,7 +4,8 @@
 rootユーザーで実行してください。
 
 ```bash
-curl -s -o /tmp/init.sh http://172.17.217.19/init.sh && sudo /bin/bash -c "chmod +x /tmp/init.sh; /tmp/init.sh 192.168.25.138"
+curl -s -o /tmp/init.sh https://raw.githubusercontent.com/ayato-shitomi/ayato-hardening-v2/refs/heads/master/init.sh
+sudo /bin/bash -c "chmod +x /tmp/init.sh && /tmp/init.sh"
 ```
 
 # 脆弱性一覧
@@ -209,6 +210,46 @@ sudo sed -i 's/chmod[[:space:]]\+777/chmod 400/g' /usr/local/bin/db_backup.sh
 
 # 競技方法
 
+AWSへ環境をデプロイした場合に以下を実施する。
+
+## 運営者
+
+```bash
+cd aws
+
+# キーのエクスポート
+export AWS_ACCESS_KEY_ID="AKIAxxxxxxxxxxxx"
+export AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxx"
+export AWS_DEFAULT_REGION="ap-northeast-1"
+
+# 必要に応じて`terraform.tfvars`を参照してファイルを編集してください
+# デプロイの実施
+terraform init
+terraform plan
+terraform apply
+
+# SSHでの接続
+ssh -J ubuntu@3.112.173.25 ubuntu@10.0.2.246 -L 1234:10.0.2.246:1234
+
+# マシンコンフィグの設定スクリプト編集
+# 適切なIPアドレスとチーム名に書き換えてください
+vi ~/ayato-hardening-v2-master/attack/config.json
+
+# スコアボードの起動
+source ~/ayato-hardening-v2-master/venv/bin/activate
+pip install Flask
+cd ~/ayato-hardening-v2-master/scoreboard
+python3 scorebord.py &>/dev/null &
+
+# シナリオの開始
+cd ~/ayato-hardening-v2-master/attack
+python3 main.py
+
+# スコアボードの終了
+pkill -f "python3 scoreboard.py"
+```
+
+
 ## 参加者
 
 ```bash
@@ -216,13 +257,10 @@ sudo sed -i 's/chmod[[:space:]]\+777/chmod 400/g' /usr/local/bin/db_backup.sh
 ssh -J ubuntu@JUMP_SRV USER@HARDENING_INSTANCE_IP
 
 # ローカルにフォワーディングを行う
-ssh -L 10080:HARDENING_INSTANCE_IP:80 -L 15000:HARDENING_INSTANCE_IP:5000 ubuntu@JUMP_SRV
+ssh -L 80:HARDENING_INSTANCE_IP:80 -L 5000:HARDENING_INSTANCE_IP:5000 ubuntu@JUMP_SRV
 ```
 
-```
-# SSHでの接続
-ssh -J ubuntu@3.112.173.25 USER@10.0.2.10
-
-# ローカルにフォワーディングを行う
-ssh -L 10080:10.0.2.10:80 -L 15000:10.0.2.10:5000 ubuntu@3.112.173.25
-```
+- WordPressへアクセスできることを確認
+ - http://localhost/
+- Flaskアプリへアクセスできることを確認
+ - http://localhost:5000/
