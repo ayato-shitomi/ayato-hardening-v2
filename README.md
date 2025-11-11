@@ -229,7 +229,7 @@ terraform plan
 terraform apply
 
 # SSHでの接続
-ssh -J ubuntu@3.112.173.25 ubuntu@10.0.2.246 -L 1234:10.0.2.246:1234
+ssh -J ubuntu@JUMP_SRV ubuntu@ATTACKER_IP -L 1234:ATTACKER_IP:1234
 
 # マシンコンフィグの設定スクリプト編集
 # 適切なIPアドレスとチーム名に書き換えてください
