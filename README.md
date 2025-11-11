@@ -229,7 +229,7 @@ terraform plan
 terraform apply
 
 # SSHでの接続
-ssh -J ubuntu@JUMP_SRV ubuntu@ATTACKER_IP -L 1234:ATTACKER_IP:1234
+ssh -J ubuntu@BASION_IP ubuntu@10.0.2.200 -L 1234:10.0.2.200:1234
 
 # マシンコンフィグの設定スクリプト編集
 # 適切なIPアドレスとチーム名に書き換えてください
@@ -252,12 +252,14 @@ pkill -f "python3 scoreboard.py"
 
 ## 参加者
 
+Xはチーム番号とする。
+
 ```bash
 # SSHでの接続
-ssh -J ubuntu@JUMP_SRV USER@HARDENING_INSTANCE_IP
+ssh -J ubuntu@52.195.12.134 root@10.0.2.X
 
 # ローカルにフォワーディングを行う
-ssh -L 80:HARDENING_INSTANCE_IP:80 -L 5000:HARDENING_INSTANCE_IP:5000 ubuntu@JUMP_SRV
+ssh -L 80:10.0.2.X:80 -L 5000:10.0.2.X:5000 ubuntu@BASION_IP
 ```
 
 - WordPressへアクセスできることを確認
