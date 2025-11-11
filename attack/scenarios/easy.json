@@ -2,7 +2,7 @@
     "about": {
         "name": "Easy Scenario",
         "description": "非常にシンプルなシナリオで、基本的な攻撃モジュールによる攻撃を実行します。",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "Ayato"
     },
     "scenario": [
@@ -44,7 +44,7 @@
                 "module": "modules/attacks/ssh_brute_force.py",
                 "options": {
                     "wordlist": "modules/wordlists/linux_backdoor.json",
-                    "cmd": "sudo systemctl stop apache2"
+                    "cmd": "HACKED_YOUR_SYSTEM > ~/hacked_by_backdoor.txt"
                 },
                 "libraries": [
                     "paramiko>=2.7.2"
