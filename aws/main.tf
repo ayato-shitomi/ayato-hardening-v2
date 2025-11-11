@@ -367,7 +367,7 @@ resource "aws_instance" "internal" {
   instance_type          = var.internal_instance_type
   subnet_id              = aws_subnet.private_subnet.id
   vpc_security_group_ids = [aws_security_group.internal_sg.id]
-  private_ip             = "10.0.2.${count.index + 1}"
+  private_ip             = "10.0.2.${count.index + 11}"
 
   user_data = local.init_script_with_password
 
@@ -377,7 +377,7 @@ resource "aws_instance" "internal" {
   }
 
   tags = {
-    Name = "${var.project_name}-internal-${count.index + 1}"
+    Name = "${var.project_name}-internal-${count.index + 11}"
   }
 }
 

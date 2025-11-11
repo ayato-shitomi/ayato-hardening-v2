@@ -249,7 +249,6 @@ python3 main.py
 pkill -f "python3 scoreboard.py"
 ```
 
-
 ## 参加者
 
 Xはチーム番号とする。
