@@ -206,3 +206,23 @@ systemctl restart apache2
 sudo sed -i 's/chmod[[:space:]]\+777/chmod 400/g' /usr/local/bin/db_backup.sh
 /usr/local/bin/db_backup.sh
 ```
+
+# 競技方法
+
+## 参加者
+
+```bash
+# SSHでの接続
+ssh -J ubuntu@JUMP_SRV USER@HARDENING_INSTANCE_IP
+
+# ローカルにフォワーディングを行う
+ssh -L 10080:HARDENING_INSTANCE_IP:80 -L 15000:HARDENING_INSTANCE_IP:5000 ubuntu@JUMP_SRV
+```
+
+```
+# SSHでの接続
+ssh -J ubuntu@3.112.173.25 USER@10.0.2.10
+
+# ローカルにフォワーディングを行う
+ssh -L 10080:10.0.2.10:80 -L 15000:10.0.2.10:5000 ubuntu@3.112.173.25
+```

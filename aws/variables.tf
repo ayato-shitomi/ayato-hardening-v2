@@ -47,7 +47,7 @@ variable "internal_instance_type" {
 }
 
 variable "internal_instance_count" {
-  description = "Number of internal instances (WordPress/Flask)"
+  description = "Number of internal instances"
   type        = number
   default     = 9
 

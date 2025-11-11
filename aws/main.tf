@@ -231,38 +231,57 @@ data "aws_ami" "ubuntu" {
 # User data script for password authentication
 locals {
   enable_password_auth = <<-EOF
-    #!/bin/bash
-    set -e
+#!/bin/bash
+exec > >(tee /var/log/user-data.log) 2>&1
 
-    # Enable password authentication
-    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-    systemctl restart sshd
+echo "=== User data script started at $(date) ==="
 
-    # Set password for ubuntu user
-    echo "ubuntu:${var.default_password}" | chpasswd
+# Set password for ubuntu user
+echo "ubuntu:${var.default_password}" | chpasswd
+echo "Password set for ubuntu user"
 
-    # Log completion
-    echo "Password authentication enabled" > /var/log/userdata-completion.log
+# Enable password authentication using simple method
+echo -e "PasswordAuthentication yes\nKbdInteractiveAuthentication yes" | tee /etc/ssh/sshd_config.d/99-local.conf
+chmod 644 /etc/ssh/sshd_config.d/99-local.conf
+echo "SSH config created"
+
+# Restart SSH service
+systemctl restart ssh
+systemctl restart sshd
+echo "SSH service restarted"
+
+echo "=== User data script completed at $(date) ==="
+echo "Password authentication enabled at $(date)" > /var/log/userdata-completion.log
   EOF
 
   init_script_with_password = <<-EOF
-    #!/bin/bash
-    set -e
+#!/bin/bash
+exec > >(tee /var/log/user-data.log) 2>&1
 
-    # Enable password authentication
-    sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-    systemctl restart sshd
+echo "=== User data script started at $(date) ==="
 
-    # Set password for ubuntu user
-    echo "ubuntu:${var.default_password}" | chpasswd
+# Set password for ubuntu user
+echo "ubuntu:${var.default_password}" | chpasswd
+echo "Password set for ubuntu user"
 
-    # Download and execute init script
-    curl -fsSL ${var.init_script_url} | bash
+# Enable password authentication using simple method
+echo -e "PasswordAuthentication yes\nKbdInteractiveAuthentication yes" | tee /etc/ssh/sshd_config.d/99-local.conf
+chmod 644 /etc/ssh/sshd_config.d/99-local.conf
+echo "SSH config created"
 
-    # Mark completion
-    echo "Init script completed" > /var/log/userdata-completion.log
+# Restart SSH service
+systemctl restart ssh
+systemctl restart sshd
+echo "SSH service restarted"
+
+# Download and execute init script
+echo "Downloading init script from ${var.init_script_url}"
+curl -fsSL ${var.init_script_url} -o /tmp/init.sh
+bash /tmp/init.sh
+echo "Init script executed"
+
+echo "=== User data script completed at $(date) ==="
+echo "Init script completed at $(date)" > /var/log/userdata-completion.log
   EOF
 }
 
@@ -285,7 +304,7 @@ resource "aws_instance" "bastion" {
   }
 }
 
-# Internal Instances (WordPress/Flask)
+# Internal Instances
 resource "aws_instance" "internal" {
   count = var.internal_instance_count
 

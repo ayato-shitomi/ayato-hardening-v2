@@ -6,13 +6,6 @@ echo ""
 echo "[*] Initializing srv..."
 echo "[*] Setting up with user `whoami`"
 
-# get server IP from argument
-IP="$1"
-if [ -z "$IP" ]; then
-  echo "[-] Usage: sudo $0 <SERVER_IP>"
-  exit 1
-fi
-
 # check if user is root
 if [ "$(id -u)" != "0" ]; then
    echo "[-] This script must be run as root" 1>&2
@@ -304,7 +297,7 @@ mv /var/www/html/index.html /var/www/html/index.html.bak
 wp core download --locale=ja &> /dev/null
 echo '[*] Adding user admin'
 wp core config --dbname=wp --dbuser=wpuser --dbpass='wpuser' --dbhost=localhost --dbprefix=wp_ &> /dev/null
-wp core install --url='http://$IP' --title='守るぜWordPress' --admin_user=admin --admin_password='admin' --admin_email=example@example.com &> /dev/null
+wp core install --url='http://localhost' --title='守るぜWordPress' --admin_user=admin --admin_password='admin' --admin_email=example@example.com &> /dev/null
 echo '[*] Adding user wpmanager'
 wp user create wpmanager wpmanager@example.com --role=administrator --user_pass='wpmanager' &> /dev/null
 "
@@ -460,7 +453,7 @@ wp post create --post_type=page \
 rm -f /tmp/counter_page.html
 '
 echo "[*] WordPress installation completed"
-echo "[*] WordPress is running on http://$IP"
+echo "[*] WordPress is running on http://localhost"
 
 # Setup webdav in /var/www/
 echo "[*] Setting up WebDAV"
