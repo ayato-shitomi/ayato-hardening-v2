@@ -255,10 +255,10 @@ Xはチーム番号とする。
 
 ```bash
 # SSHでの接続
-ssh -J ubuntu@52.195.12.134 root@10.0.2.X
+ssh -J ubuntu@BASION_IP root@10.0.2.1X
 
 # ローカルにフォワーディングを行う
-ssh -L 80:10.0.2.X:80 -L 5000:10.0.2.X:5000 ubuntu@BASION_IP
+ssh -L 80:10.0.2.1X:80 -L 5000:10.0.2.1X:5000 ubuntu@BASION_IP
 ```
 
 - WordPressへアクセスできることを確認

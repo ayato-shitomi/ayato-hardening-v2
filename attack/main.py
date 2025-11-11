@@ -140,6 +140,9 @@ def run_attack(ip, step):
 
 def run_scenario(victim_ips, scenario):
     print('[*] Starting attack scenario...')
+    # Initial point deduction for all teams
+    for ip in victim_ips:
+        push_scoreboard(ip, scenario.get('initial_point_deduction', 100), "Initial point deduction at scenario start")
     for step in scenario['scenario']:
         print("--------------------------------")
         print(f"[*] Preparing to execute attack: {step['name']} in {step.get('start', 0)} minutes")
