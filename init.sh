@@ -25,7 +25,7 @@ sudo systemctl start ssh &> /dev/null
 
 # enable root login via ssh
 echo "[*] Enabling root login via SSH"
-echo "    # PermitRootLogin yes" >> /etc/ssh/sshd_config
+echo "# PermitRootLogin yes" >> /etc/ssh/sshd_config
 sudo sed -i 's/^#\?\s*PermitRootLogin\s\+.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 sudo systemctl restart sshd &> /dev/null
 
