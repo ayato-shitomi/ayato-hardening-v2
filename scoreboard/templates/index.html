@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>スコアボード</title>
+        <title>{{ hardening_name }} スコアボード</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -23,10 +23,69 @@
                 height: 500px;
                 margin-top: 30px;
             }
+            /* Toast notification styles */
+            #toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .toast {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                font-size: 16px;
+                font-weight: bold;
+                animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+                max-width: 400px;
+            }
+            .toast.positive {
+                background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            }
+            .toast.negative {
+                background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            }
+            .toast-team {
+                font-size: 14px;
+                opacity: 0.9;
+                margin-bottom: 4px;
+            }
+            .toast-points {
+                font-size: 20px;
+            }
+            .toast-reason {
+                font-size: 12px;
+                opacity: 0.8;
+                margin-top: 4px;
+            }
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
         </style>
     </head>
     <body>
-        <h1>Ayato Hardening v2 スコアボード</h1>
+        <div id="toast-container"></div>
+        <h1>{{ hardening_name }} スコアボード</h1>
         <div id="chartContainer">
             <canvas id="scoreChart"></canvas>
         </div>
@@ -69,12 +128,15 @@
                 return colors[index];
             }
 
-            // グラフを描画
-            async function drawChart() {
+            // グローバルチャートインスタンス
+            let scoreChart = null;
+
+            // データセットを生成
+            async function buildDatasets() {
                 const scoresData = await fetchScores();
                 const teamsData = await fetchTeams();
 
-                const datasets = Object.keys(scoresData).map(ip => {
+                return Object.keys(scoresData).map(ip => {
                     // teamsDataはオブジェクト形式 {"team_name": "ip"} なので、チーム名を探す
                     let teamName = ip;
                     for (const [name, teamIp] of Object.entries(teamsData)) {
@@ -107,10 +169,14 @@
                         pointHoverRadius: 6
                     };
                 });
+            }
 
+            // グラフを描画
+            async function drawChart() {
+                const datasets = await buildDatasets();
                 const ctx = document.getElementById('scoreChart').getContext('2d');
 
-                new Chart(ctx, {
+                scoreChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         datasets: datasets
@@ -150,7 +216,69 @@
                     }
                 });
             }
+
+            // チャートを更新
+            async function updateChart() {
+                if (scoreChart) {
+                    const datasets = await buildDatasets();
+                    scoreChart.data.datasets = datasets;
+                    scoreChart.update();
+                }
+            }
+
             drawChart();
+
+            // Toast notification system for verbose mode
+            function showToast(team, points, reason) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                // positive for points > 0, negative for points <= 0 (including zero)
+                toast.className = 'toast ' + (points > 0 ? 'positive' : 'negative');
+
+                let message;
+                if (points > 0) {
+                    message = `+${points} points`;
+                } else if (points === 0) {
+                    message = `0 points (No score)`;
+                } else {
+                    message = `${points} points`;
+                }
+                toast.innerHTML = `
+                    <div class="toast-team">Team: ${team}</div>
+                    <div class="toast-points">${message}</div>
+                    <div class="toast-reason">Reason: ${reason}</div>
+                `;
+
+                container.appendChild(toast);
+
+                // Remove toast after 5 seconds
+                setTimeout(() => {
+                    toast.remove();
+                }, 30000);
+            }
+
+            // Check if verbose mode is enabled and set up SSE
+            async function initVerboseMode() {
+                const response = await fetch('/api/verbose');
+                const data = await response.json();
+
+                if (data.verbose) {
+                    console.log('[*] Verbose mode enabled, connecting to SSE...');
+                    const eventSource = new EventSource('/api/score_events');
+
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        showToast(data.team, data.points, data.reason);
+                        updateChart();
+                    };
+
+                    eventSource.onerror = function(err) {
+                        console.error('SSE error:', err);
+                    };
+                }
+            }
+
+            initVerboseMode();
         </script>
     </body>
 </html>

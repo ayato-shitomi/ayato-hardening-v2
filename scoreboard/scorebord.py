@@ -1,12 +1,17 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 import json
 import time
+import queue
 
 app = Flask(__name__)
 
 # Global variables for teams and scores
 teams = {}
 scores = {}
+verbose = False
+hardening_name = "Scoreboard"
+# Queue for SSE events (score notifications)
+score_events = queue.Queue()
 
 # curl http://127.0.0.1:1234/api/get_scores?ip=192.168.25.140
 @app.route('/api/get_scores', methods=['GET'])
@@ -43,11 +48,37 @@ def push_score():
         "points": points,
         "reason": reason
     })
+    # Send SSE event for verbose mode
+    if verbose:
+        team_name = scores[ip].get("team", ip)
+        event_data = {
+            "team": team_name,
+            "points": points,
+            "reason": reason
+        }
+        score_events.put(event_data)
     return jsonify({"status": "success", "new_score": scores[ip]['score']})
+
+# SSE endpoint for score notifications
+@app.route('/api/score_events')
+def score_events_stream():
+    def generate():
+        while True:
+            try:
+                event = score_events.get(timeout=30)
+                yield f"data: {json.dumps(event)}\n\n"
+            except queue.Empty:
+                yield f": keepalive\n\n"
+    return Response(generate(), mimetype='text/event-stream')
+
+# API to check if verbose mode is enabled
+@app.route('/api/verbose')
+def get_verbose():
+    return jsonify({"verbose": verbose})
 
 @app.route('/')
 def index():
-    return render_template('index.html', scores=scores, teams=teams)
+    return render_template('index.html', scores=scores, teams=teams, hardening_name=hardening_name)
 
 def get_config(path):
     try:
@@ -67,6 +98,8 @@ def main():
             exit(1)
         scoreboard_ip = config["scoreboard"]["ip"]
         scoreboard_port = config["scoreboard"]["port"]
+        verbose_mode = config["scoreboard"].get("verbose", False)
+        hardening_name = config["scoreboard"].get("hardening_name", "Scoreboard")
         teams = config["teams"]
         scores = {}
         for t in teams:
@@ -76,16 +109,14 @@ def main():
                 "score": 0,
                 "actions": []
             }
-        return scoreboard_ip, scoreboard_port, teams, scores
+        return scoreboard_ip, scoreboard_port, teams, scores, verbose_mode, hardening_name
     except Exception as e:
         print(f"[-] An error occurred in main(): {str(e)}")
         exit(1)
 
 if __name__ == '__main__':
-    # global teams
-    # global scores
-    ip, port, teams, scores = main()
-    print(f"[*] Starting scoreboard on {ip}:{port}")
+    ip, port, teams, scores, verbose, hardening_name = main()
+    print(f"[*] Starting scoreboard on {ip}:{port} (verbose={verbose})")
     app.run(host=ip, port=port)
 
 """
