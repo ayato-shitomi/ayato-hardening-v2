@@ -16,7 +16,7 @@ fi
 echo "[*] Installing required packages"
 sudo apt update &> /dev/null
 sudo apt install python3-pip python3-venv iputils-ping -y > /dev/null &> /dev/null
-sudo apt install apache2 php libapache2-mod-php mysql-server php-mysql wget vim apache2-utils cron -y &> /dev/null
+sudo apt install apache2 php libapache2-mod-php php-xml mysql-server php-mysql wget vim apache2-utils cron -y &> /dev/null
 
 # enable ssh service
 echo "[*] Enabling SSH service"
