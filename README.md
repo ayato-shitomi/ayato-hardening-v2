@@ -249,6 +249,9 @@ python3 main.py
 pkill -f "python3 scoreboard.py"
 ```
 
+- スコアボードにアクセスできることを確認
+ - http://localhost:1234/
+
 ## 参加者
 
 Xはチーム番号とする。

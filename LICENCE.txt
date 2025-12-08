@@ -1,0 +1,27 @@
+Copyright (c) 2025 Ayato Shitomi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, and distribute the Software for **non-commercial purposes only**,
+subject to the following conditions:
+
+1. **Commercial Use Requires Permission**  
+   Commercial use of this Software, including but not limited to use within
+   paid products, services, SaaS offerings, or any activity generating direct
+   or indirect financial benefit, **is prohibited without prior written
+   permission from the copyright holder**.
+
+2. **Attribution**  
+   Redistributions of the Software or modified versions must include this
+   license and attribution to the original author.
+
+3. **No Warranty**  
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+4. Commercial Licensing Contact  
+   For commercial use permissions or licensing inquiries, please contact:
+   ayato[D0T]shitomi+hardening[AT]gmail[D0T]com
+
+By using this Software, you agree to comply with the above terms.
