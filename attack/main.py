@@ -172,6 +172,7 @@ def check_scoreboard(config):
 
 def main():
     global teams
+    global scoreboard_verbose
     global scoreboard_url
     config = get_config('config.json')
     if config == -1:
@@ -188,6 +189,7 @@ def main():
         return -1
     victim_ips = config['victim_ips']
     teams = config['teams']
+    scoreboard_verbose = config["scoreboard"].get("verbose", False)
     run_scenario(victim_ips, scenario)
 
 if __name__== '__main__':

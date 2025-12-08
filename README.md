@@ -265,6 +265,6 @@ ssh -L 80:10.0.2.1X:80 -L 5000:10.0.2.1X:5000 ubuntu@BASION_IP
 ```
 
 - WordPressへアクセスできることを確認
- - http://localhost/
+  - http://localhost/
 - Flaskアプリへアクセスできることを確認
- - http://localhost:5000/
+  - http://localhost:5000/

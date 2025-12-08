@@ -1,3 +1,5 @@
 **/__pycache__/
 attack/equirements.txt
 venv
+scoreboard/__pycache__/
+scoreboard/venv/
