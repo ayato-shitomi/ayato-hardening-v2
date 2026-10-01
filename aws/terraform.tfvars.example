@@ -22,4 +22,4 @@ default_password = "ChangeMe123!"
 
 # URL to initialization script
 # This script will be downloaded and executed on internal instances
-init_script_url = "https://raw.githubusercontent.com/your-repo/init.sh"
+init_script_url = "https://raw.githubusercontent.com/ayato-shitomi/ayato-hardening-v2/refs/heads/master/init.sh"
